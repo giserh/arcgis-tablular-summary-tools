@@ -17,10 +17,10 @@ def _is_field_decimal(table, field_name):
     :return:
     """
     # get the field data type
-    field_type = [field.type for field in arcpy.ListFields(table) if field.name == field_name][0]
+    field_type = [field.type for field in arcpy.ListFields(table) if field.name == field_name][0].lower()
 
     # check if the field data type is a decimal type
-    if field_type == 'FLOAT' or field_type == 'DOUBLE':
+    if field_type == 'float' or field_type == 'float':
         return True
     else:
         return False
