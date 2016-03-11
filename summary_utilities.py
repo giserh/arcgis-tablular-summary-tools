@@ -9,6 +9,23 @@ import arcpy
 import scipy.stats
 
 
+def _is_field_decimal(table, field_name):
+    """
+    Utility to check if field type is float or double, a decimal field.
+    :param table:
+    :param field_name:
+    :return:
+    """
+    # get the field data type
+    field_type = [field.type for field in arcpy.ListFields(table) if field.name == field_name][0]
+
+    # check if the field data type is a decimal type
+    if field_type == 'FLOAT' or field_type == 'DOUBLE':
+        return True
+    else:
+        return False
+
+
 def calculate_zscore(table, data_field, zscore_field):
     """
     For a table supported by arcpy, calculate the zscore to a new field based on the values in the data field.
@@ -17,6 +34,10 @@ def calculate_zscore(table, data_field, zscore_field):
     :param zscore_field: Field to be populated with the Z-Score.
     :return:
     """
+    # ensure the field is a decimal data type
+    if not _is_field_decimal(table, zscore_field):
+        raise Exception('ZScore field, {},is not float or double, a decimal data type.'.format(zscore_field))
+
     # sql query to exclude records with null values
     sql_query = '{} IS NOT NULL'.format(data_field)
 
@@ -57,7 +78,7 @@ def add_calculate_zscore(table, data_field, zscore_field_name, zscore_field_alia
         in_table=table,
         field_name=zscore_field_name,
         field_alias=zscore_field_alias,
-        field_type='FLOAT'
+        field_type='DOUBLE'
     )
 
     # calculate the zscore
@@ -73,6 +94,12 @@ def calculate_percent_delta(table, data_field_one, data_field_two, delta_field):
     :param delta_field: The field where the results will be saved.
     :return:
     """
+    # ensure the field is a decimal data type
+    if not _is_field_decimal(table, delta_field):
+        raise Exception(
+            'Percent change delta field, {},is not float or double, a decimal data type.'.format(delta_field)
+        )
+
     # create an update cursor
     with arcpy.da.UpdateCursor(table, [data_field_one, data_field_two, delta_field]) as update_cursor:
 
@@ -80,7 +107,7 @@ def calculate_percent_delta(table, data_field_one, data_field_two, delta_field):
         for row in update_cursor:
 
             # calculate the percent change score
-            row[2] = 1 - row[1] / row[2]
+            row[2] = 1 - float(row[1]) / float(row[2])
 
             # commit the update
             row.updateRow(row)
