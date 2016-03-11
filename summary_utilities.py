@@ -94,14 +94,17 @@ def calculate_percent_delta(table, data_field_one, data_field_two, delta_field):
     :param delta_field: The field where the results will be saved.
     :return:
     """
-    # ensure the field is a decimal data type
+    # ensure the output field is a decimal data type
     if not _is_field_decimal(table, delta_field):
         raise Exception(
             'Percent change delta field, {},is not float or double, a decimal data type.'.format(delta_field)
         )
 
+    # sql query to exclude fields where either the first or second data fields are null
+    sql_query = '{} IS NOT NULL AND {} IS NOT NULL'.format(data_field_one, data_field_two)
+
     # create an update cursor
-    with arcpy.da.UpdateCursor(table, [data_field_one, data_field_two, delta_field]) as update_cursor:
+    with arcpy.da.UpdateCursor(table, [data_field_one, data_field_two, delta_field], sql_query) as update_cursor:
 
         # iterate
         for row in update_cursor:
