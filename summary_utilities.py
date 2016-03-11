@@ -9,16 +9,19 @@ import arcpy
 import scipy.stats
 
 
-def calculate_zscore(table, data_field, zscore_field):
+def calculate_zscore(table, data_field, zscore_field, outlier_percent_threshold=10):
     """
     For a table supported by arcpy, calculate the zscore to a new field based on the values in the data field.
     :param table: Table supported by arcpy.
     :param data_field: Field containing the data values.
     :param zscore_field: Field to be populated with the Z-Score.
+    :param outlier_percent_threshold:
     :return:
     """
-    # sql query to exclude records with null values
-    sql_query = '{} IS NOT NULL'.format(data_field)
+    # sql query to exclude records with null values or complete outliers
+    sql_query = '{0} IS NOT NULL AND {1} <= {2} AND {3} >= -{4}'.format(
+        data_field, data_field, outlier_percent_threshold, data_field, outlier_percent_threshold
+    )
 
     # create the array of values from the data field
     data_list = [row[0] for row in arcpy.da.SearchCursor(table, data_field, sql_query)]
@@ -39,13 +42,14 @@ def calculate_zscore(table, data_field, zscore_field):
             update_cursor.updateRow(row)
 
 
-def add_calculate_zscore(table, data_field, zscore_field_name, zscore_field_alias):
+def add_calculate_zscore(table, data_field, zscore_field_name, zscore_field_alias, outlier_percent_threshold=10):
     """
     Wrapper around calculate field adding the added functionality of adding the field when running the tool.
     :param table: Table supported by arcpy.
     :param data_field: Field containing the data values.
     :param zscore_field_name: Field to be populated with the Z-Score.
     :param zscore_field_alias: Human readable name for the field.
+    :param outlier_percent_threshold:
     :return:
     """
     # make sure the field does not already exist
@@ -61,7 +65,7 @@ def add_calculate_zscore(table, data_field, zscore_field_name, zscore_field_alia
     )
 
     # calculate the zscore
-    calculate_zscore(table, data_field, zscore_field_name)
+    calculate_zscore(table, data_field, zscore_field_name, outlier_percent_threshold)
 
 
 def calculate_percent_delta(table, data_field_one, data_field_two, delta_field):
@@ -117,7 +121,8 @@ def add_calculate_percent_delta(table, data_field_one, data_field_two, delta_fie
     calculate_percent_delta(table, data_field_one, data_field_two, delta_field_name)
 
 
-def calculate_delta_zscore(table, data_field_one, data_field_two, delta_field, zscore_field):
+def calculate_delta_zscore(table, data_field_one, data_field_two, delta_field, zscore_field,
+                           outlier_percent_threshold=10):
     """
     Calculate both the delta and zscore fields in one pass.
     :param table:
@@ -125,17 +130,18 @@ def calculate_delta_zscore(table, data_field_one, data_field_two, delta_field, z
     :param data_field_two:
     :param delta_field:
     :param zscore_field:
+    :param outlier_percent_threshold:
     :return:
     """
     # calculate the delta field first
     calculate_percent_delta(table, data_field_one, data_field_two, delta_field)
 
     # next, calculate the zscore field
-    calculate_zscore(table, delta_field, zscore_field)
+    calculate_zscore(table, delta_field, zscore_field, outlier_percent_threshold)
 
 
 def add_calculate_delta_zscore(table, data_field_one, data_field_two, delta_field_name, delta_field_alias,
-                               zscore_field_name, zscore_field_alias):
+                               zscore_field_name, zscore_field_alias, outlier_percent_threshold=10):
     """
     Add and calculate both the percent delta and zscore fields in one pass.
     :param table:
@@ -145,10 +151,11 @@ def add_calculate_delta_zscore(table, data_field_one, data_field_two, delta_fiel
     :param delta_field_alias:
     :param zscore_field_name:
     :param zscore_field_alias:
+    :param outlier_percent_threshold:
     :return:
     """
     # add and calculate the delta field
     add_calculate_percent_delta(table, data_field_one, data_field_two, delta_field_name, delta_field_alias)
 
     # add and calculate the zscore field
-    add_calculate_zscore(table, delta_field_name, zscore_field_name, zscore_field_alias)
+    add_calculate_zscore(table, delta_field_name, zscore_field_name, zscore_field_alias, outlier_percent_threshold)

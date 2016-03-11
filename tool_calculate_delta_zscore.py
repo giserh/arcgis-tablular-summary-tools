@@ -3,7 +3,7 @@ Provide tool binding to add and calculate zscore functionality in summary utilit
 """
 # import just what we need to speed up tool loading
 from summary_utilities import calculate_delta_zscore
-from arcpy import GetParameterAsText
+from arcpy import GetParameter, GetParameterAsText
 
 # run the function
 calculate_delta_zscore(
@@ -11,5 +11,6 @@ calculate_delta_zscore(
     data_field_one=GetParameterAsText(1),
     data_field_two=GetParameterAsText(2),
     delta_field=GetParameterAsText(3),
-    zscore_field=GetParameterAsText(4)
+    zscore_field=GetParameterAsText(4),
+    outlier_percent_threshold=GetParameter(5)
 )
