@@ -20,7 +20,7 @@ def _is_field_decimal(table, field_name):
     field_type = [field.type for field in arcpy.ListFields(table) if field.name == field_name][0].lower()
 
     # check if the field data type is a decimal type
-    if field_type == 'float' or field_type == 'float':
+    if field_type == 'float' or field_type == 'double':
         return True
     else:
         return False
@@ -100,8 +100,10 @@ def calculate_percent_delta(table, data_field_one, data_field_two, delta_field):
             'Percent change delta field, {},is not float or double, a decimal data type.'.format(delta_field)
         )
 
-    # sql query to exclude fields where either the first or second data fields are null
-    sql_query = '{} IS NOT NULL AND {} IS NOT NULL'.format(data_field_one, data_field_two)
+    # sql query to exclude fields where either the first or second data fields are null or zero
+    sql_query = '{} IS NOT NULL AND {} IS NOT NULL AND {} > 0 AND {} > 0'.format(
+        data_field_one, data_field_two, data_field_one, data_field_two
+    )
 
     # create an update cursor
     with arcpy.da.UpdateCursor(table, [data_field_one, data_field_two, delta_field], sql_query) as update_cursor:
@@ -110,10 +112,10 @@ def calculate_percent_delta(table, data_field_one, data_field_two, delta_field):
         for row in update_cursor:
 
             # calculate the percent change score
-            row[2] = 1 - float(row[1]) / float(row[2])
+            row[2] = 1 - float(row[0]) / float(row[1])
 
             # commit the update
-            row.updateRow(row)
+            update_cursor.updateRow(row)
 
 
 def add_calculate_percent_delta(table, data_field_one, data_field_two, delta_field_name, delta_field_alias):
