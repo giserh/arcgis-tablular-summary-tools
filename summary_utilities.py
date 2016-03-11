@@ -115,3 +115,40 @@ def add_calculate_percent_delta(table, data_field_one, data_field_two, delta_fie
 
     # calculate the percent delta
     calculate_percent_delta(table, data_field_one, data_field_two, delta_field_name)
+
+
+def calculate_delta_zscore(table, data_field_one, data_field_two, delta_field, zscore_field):
+    """
+    Calculate both the delta and zscore fields in one pass.
+    :param table:
+    :param data_field_one:
+    :param data_field_two:
+    :param delta_field:
+    :param zscore_field:
+    :return:
+    """
+    # calculate the delta field first
+    calculate_percent_delta(table, data_field_one, data_field_two, delta_field)
+
+    # next, calculate the zscore field
+    calculate_zscore(table, delta_field, zscore_field)
+
+
+def add_calculate_delta_zscore(table, data_field_one, data_field_two, delta_field_name, delta_field_alias,
+                               zscore_field_name, zscore_field_alias):
+    """
+    Add and calculate both the percent delta and zscore fields in one pass.
+    :param table:
+    :param data_field_one:
+    :param data_field_two:
+    :param delta_field_name:
+    :param delta_field_alias:
+    :param zscore_field_name:
+    :param zscore_field_alias:
+    :return:
+    """
+    # add and calculate the delta field
+    add_calculate_percent_delta(table, data_field_one, data_field_two, delta_field_name, delta_field_alias)
+
+    # add and calculate the zscore field
+    add_calculate_zscore(table, delta_field_name, zscore_field_name, zscore_field_alias)
