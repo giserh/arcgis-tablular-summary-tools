@@ -9,23 +9,6 @@ import arcpy
 import scipy.stats
 
 
-def _is_field_decimal(table, field_name):
-    """
-    Utility to check if field type is float or double, a decimal field.
-    :param table:
-    :param field_name:
-    :return:
-    """
-    # get the field data type
-    field_type = [field.type for field in arcpy.ListFields(table) if field.name == field_name][0].lower()
-
-    # check if the field data type is a decimal type
-    if field_type == 'float' or field_type == 'double':
-        return True
-    else:
-        return False
-
-
 def calculate_zscore(table, data_field, zscore_field):
     """
     For a table supported by arcpy, calculate the zscore to a new field based on the values in the data field.
@@ -34,10 +17,6 @@ def calculate_zscore(table, data_field, zscore_field):
     :param zscore_field: Field to be populated with the Z-Score.
     :return:
     """
-    # ensure the field is a decimal data type
-    if not _is_field_decimal(table, zscore_field):
-        raise Exception('ZScore field, {},is not float or double, a decimal data type.'.format(zscore_field))
-
     # sql query to exclude records with null values
     sql_query = '{} IS NOT NULL'.format(data_field)
 
@@ -94,12 +73,6 @@ def calculate_percent_delta(table, data_field_one, data_field_two, delta_field):
     :param delta_field: The field where the results will be saved.
     :return:
     """
-    # ensure the output field is a decimal data type
-    if not _is_field_decimal(table, delta_field):
-        raise Exception(
-            'Percent change delta field, {},is not float or double, a decimal data type.'.format(delta_field)
-        )
-
     # sql query to exclude fields where either the first or second data fields are null or zero
     sql_query = '{} IS NOT NULL AND {} IS NOT NULL AND {} > 0 AND {} > 0'.format(
         data_field_one, data_field_two, data_field_one, data_field_two
@@ -137,7 +110,7 @@ def add_calculate_percent_delta(table, data_field_one, data_field_two, delta_fie
         in_table=table,
         field_name=delta_field_name,
         field_alias=delta_field_alias,
-        field_type='FLOAT'
+        field_type='DOUBLE'
     )
 
     # calculate the percent delta
