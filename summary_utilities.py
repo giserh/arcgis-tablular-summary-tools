@@ -62,3 +62,51 @@ def add_calculate_zscore(table, data_field, zscore_field_name, zscore_field_alia
 
     # calculate the zscore
     calculate_zscore(table, data_field, zscore_field_name)
+
+
+def calculate_percent_delta(table, data_field_one, data_field_two, delta_field):
+    """
+    Given two fields for the same performance metric over time, create a comparison score indicating the percent change.
+    :param table: Table containing the data to be calculated.
+    :param data_field_one: Data field for the metric indicator for the first time period.
+    :param data_field_two: Data field for the metric indicator for the second time period.
+    :param delta_field: The field where the results will be saved.
+    :return:
+    """
+    # create an update cursor
+    with arcpy.da.UpdateCursor(table, [data_field_one, data_field_two, delta_field]) as update_cursor:
+
+        # iterate
+        for row in update_cursor:
+
+            # calculate the percent change score
+            row[2] = 1 - row[1] / row[2]
+
+            # commit the update
+            row.updateRow(row)
+
+
+def add_calculate_percent_delta(table, data_field_one, data_field_two, delta_field_name, delta_field_alias):
+    """
+    Wrapper around calculate field adding the added functionality of adding the field when running the tool.
+    :param table:
+    :param data_field_one:
+    :param data_field_two:
+    :param delta_field_name:
+    :param delta_field_alias:
+    :return:
+    """
+    # make sure the field does not already exist
+    if delta_field_name in [field.name for field in arcpy.ListFields(table)]:
+        raise Exception("Field {} already exists.".format(delta_field_name))
+
+    # add the field
+    arcpy.AddField_management(
+        in_table=table,
+        field_name=delta_field_name,
+        field_alias=delta_field_alias,
+        field_type='FLOAT'
+    )
+
+    # calculate the percent delta
+    calculate_percent_delta(table, data_field_one, data_field_two, delta_field_name)
